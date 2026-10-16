@@ -1,0 +1,113 @@
+{
+  "info": {
+    "name": "Sample Payment API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GUARANTEED_INVOICE Payment",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();",
+              "",
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Transaction TID exists', function() {",
+              "    pm.expect(jsonData.transaction.tid).to.exist;",
+              "});",
+              "",
+              "pm.test('Transaction status is CONFIRMED', function() {",
+              "    pm.expect(jsonData.transaction.status).to.equal('CONFIRMED');",
+              "});",
+              "",
+              "// Save TID to environment",
+              "if(jsonData.transaction && jsonData.transaction.tid) {",
+              "    pm.environment.set('tid', jsonData.transaction.tid);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-KEY",
+            "value": "{{api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"merchant\": {\n    \"signature\": \"{{signature}}\",\n    \"tariff\": \"{{tariff}}\"\n  },\n  \"customer\": {\n    \"first_name\": \"{{first_name}}\",\n    \"last_name\": \"{{last_name}}\",\n    \"email\": \"{{email}}\",\n    \"billing_address\": {\n      \"street\": \"{{street}}\",\n      \"city\": \"{{city}}\",\n      \"zip\": \"{{zip}}\",\n      \"country_code\": \"{{country_code}}\",\n      \"state\": \"{{state}}\"\n    },\n    \"birth_date\": \"{{birth_date}}\"\n  },\n  \"transaction\": {\n    \"payment_type\": \"GUARANTEED_INVOICE\",\n    \"amount\": \"{{amount}}\",\n    \"currency\": \"{{currency}}\",\n    \"order_no\": \"{{order_no}}\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/payment",
+          "host": ["{{base_url}}"],
+          "path": ["payment"]
+        }
+      }
+    },
+    {
+      "name": "GUARANTEED_DIRECT_DEBIT_SEPA Payment",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();",
+              "",
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Transaction TID exists', function() {",
+              "    pm.expect(jsonData.transaction.tid).to.exist;",
+              "});",
+              "",
+              "pm.test('Transaction status is CONFIRMED', function() {",
+              "    pm.expect(jsonData.transaction.status).to.equal('CONFIRMED');",
+              "});",
+              "",
+              "if(jsonData.transaction && jsonData.transaction.tid) {",
+              "    pm.environment.set('tid', jsonData.transaction.tid);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-KEY",
+            "value": "{{api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"merchant\": {\n    \"signature\": \"{{signature}}\",\n    \"tariff\": \"{{tariff}}\"\n  },\n  \"customer\": {\n    \"first_name\": \"{{first_name}}\",\n    \"last_name\": \"{{last_name}}\",\n    \"email\": \"{{email}}\",\n    \"billing_address\": {\n      \"street\": \"{{street}}\",\n      \"city\": \"{{city}}\",\n      \"zip\": \"{{zip}}\",\n      \"country_code\": \"{{country_code}}\",\n      \"state\": \"{{state}}\"\n    },\n    \"birth_date\": \"{{birth_date}}\"\n  },\n  \"transaction\": {\n    \"payment_type\": \"GUARANTEED_DIRECT_DEBIT_SEPA\",\n    \"amount\": \"{{amount}}\",\n    \"currency\": \"{{currency}}\",\n    \"order_no\": \"{{order_no}}\"\n  },\n  \"banking_account\": {\n    \"iban\": \"{{iban}}\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/payment",
+          "host": ["{{base_url}}"],
+          "path": ["payment"]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "id": "sample-environment",
+  "name": "Sample Payment Environment",
+  "values": [
+    {
+      "key": "base_url",
+      "value": "https://payport.novalnet.de/v2",
+      "enabled": true
+    },
+    {
+      "key": "api_key",
+      "value": "a87ff679a2f3e71d9181a67b7542122c",
+      "enabled": true
+    },
+    {
+      "key": "signature",
+      "value": "n7ibc7ob5t|doU3HJVoym7MQ44qonbobljblnmdli0p|qJEH3gNbeWJfIHah||f7cpn7pc",
+      "enabled": true
+    },
+    {
+      "key": "tariff",
+      "value": "30",
+      "enabled": true
+    },
+    {
+      "key": "currency",
+      "value": "EUR",
+      "enabled": true
+    },
+    {
+      "key": "tid",
+      "value": "",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}
