@@ -1,0 +1,119 @@
+name: Payment API Tests
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  newman-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Newman and dependencies
+        run: |
+          npm install -g newman
+          npm install -g newman-reporter-html
+          pip install pandas openpyxl
+
+      - name: Run Payment API Tests
+        run: |
+          newman run "sample_collection.json" \
+            -e "sample_environment.json" \
+            -d "sample_data.csv" \
+            -r cli,html,json \
+            --reporter-html-export newman-report.html \
+            --reporter-json-export newman-report.json \
+            --suppress-exit-code
+
+      - name: Convert JSON to Excel
+        run: |
+          python3 << 'PYEOF'
+          import json
+          import pandas as pd
+          from datetime import datetime
+
+          with open('newman-report.json', 'r') as f:
+              data = json.load(f)
+
+          rows = []
+          for i, iteration in enumerate(data['run']['executions']):
+              request_name = iteration['item']['name']
+              response = iteration.get('response', {})
+              status_code = response.get('code', 'N/A')
+
+              try:
+                  raw = response.get('stream', {}).get('data', [])
+                  body = json.loads(bytes(raw).decode())
+                  tid = body.get('transaction', {}).get('tid', 'N/A')
+                  txn_status = body.get('transaction', {}).get('status', 'N/A')
+              except:
+                  tid = 'N/A'
+                  txn_status = 'N/A'
+
+              assertions = iteration.get('assertions', [])
+              test_status = 'PASS'
+              failed_tests = []
+              for assertion in assertions:
+                  if assertion.get('error'):
+                      test_status = 'FAIL'
+                      failed_tests.append(assertion['assertion'])
+
+              rows.append({
+                  'Iteration': i + 1,
+                  'Request Name': request_name,
+                  'Status Code': status_code,
+                  'TID': tid,
+                  'Transaction Status': txn_status,
+                  'Test Result': test_status,
+                  'Failed Tests': ', '.join(failed_tests) if failed_tests else 'None',
+                  'Run Date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+              })
+
+          df = pd.DataFrame(rows)
+
+          with pd.ExcelWriter('payment-test-report.xlsx', engine='openpyxl') as writer:
+              df.to_excel(writer, index=False, sheet_name='Test Results')
+              workbook = writer.book
+              worksheet = writer.sheets['Test Results']
+
+              from openpyxl.styles import PatternFill, Font, Alignment
+              green = PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid')
+              red = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
+              header_fill = PatternFill(start_color='2E4057', end_color='2E4057', fill_type='solid')
+
+              for cell in worksheet[1]:
+                  cell.fill = header_fill
+                  cell.font = Font(bold=True, color='FFFFFF')
+                  cell.alignment = Alignment(horizontal='center')
+
+              for row in worksheet.iter_rows(min_row=2):
+                  for cell in row:
+                      if worksheet.cell(row=cell.row, column=6).value == 'PASS':
+                          cell.fill = green
+                      elif worksheet.cell(row=cell.row, column=6).value == 'FAIL':
+                          cell.fill = red
+
+              for col in worksheet.columns:
+                  worksheet.column_dimensions[col[0].column_letter].width = 22
+
+          print('Excel report created successfully!')
+          PYEOF
+
+      - name: Upload Excel Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: payment-test-report
+          path: payment-test-report.xlsx
+
+      - name: Upload HTML Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-html-report
+          path: newman-report.html
